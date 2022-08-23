@@ -1,0 +1,4 @@
+Utilize programs like john the ripper to crack password hashes, and don't forget to convert zip files to hash files before cracking. You can utilize zip2john for this type of activity. 
+
+If you are completely at a loss on how to crack a password protected zip file, read the final hint "last-hint-in-case-of-emergency"
+

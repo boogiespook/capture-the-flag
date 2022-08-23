@@ -1,0 +1,26 @@
+---
+# Tasks file for telescope-ctf
+
+## Install packages (httpd, ftp)
+
+## Configure vsfdp for anon access
+
+## Start services (httpd, vsftpd)
+
+## Create users (telescope, welcome, hackathon)
+tasks:
+    - name: Add the user 'Matt' with a specific uid and a primary group of 'sudo'
+      ansible.builtin.user:
+        name: matt
+        comment: matt_ata
+        uid: 1053
+        group: sudo
+        password: '$6$kjPn3KClxO.Lujw$BjDr2y4vvJK3Q.C/nLET.A/FD9OxN6DNASmLetapq9LiXVVlTrYnvlEGuITZiVkV3JhX.vbsZ68/hnbdRsYnx1'
+        createhome: yes     # Defaults to yes
+        home: /home/matt    # Defaults to /home/<username>
+
+## Create directories
+
+## Add files
+
+## Change permissions

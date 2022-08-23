@@ -1,0 +1,211 @@
+---
+- name: CTF Installation
+  hosts: ctf
+#  gather_facts: no
+
+# Tasks file for telescope-ctf
+  tasks:
+
+## Install EPEL
+    - name: Enable EPEL Repository
+      shell: dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
+## Install packages (httpd, ftp)
+    - name: Install packages
+      yum:
+        state: present
+        name:
+          - httpd
+          - vsftpd
+          - policycoreutils-python-utils
+          - nmap
+          - net-tools
+          - php
+          - firewalld
+          - unzip
+          - ftp
+          - snapd
+
+## Restart firewalld just in case
+    - name: Restart firewalld
+      service:
+          name: firewalld
+          state: started
+          enabled: true
+
+## SELinux fudge
+    - name: Update SELinux - add port 8008 for httpd
+      shell: semanage port -a -t http_port_t -p tcp 8008
+      register: seout
+      failed_when: "seout.rc not in [0,1,2]"
+      ignore_errors: true
+
+
+## Allow port 8008 & 21
+    - name: Update firewalld to allow 8008
+      firewalld:
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      loop:
+           - 8008/tcp
+           - 20/tcp
+           - 21/tcp
+
+## Add ftp service to firewalld
+    - name: Enable ftp service in firewalld
+      shell: "firewall-cmd --permanent --zone=public --add-service=ftp && firewall-cmd --reload"
+
+
+## Allow anonymous ftp
+    - name: Allow anonymous ftp ## Default dir: /var/ftp/pub/
+      lineinfile: dest=/etc/vsftpd/vsftpd.conf regexp="^anonymous_enable=NO" line="anonymous_enable=YES" state=present
+
+## Change standard web directory
+    - name: Create new www directory
+      file:
+        path: /var/1786
+        mode: 0775
+        state: directory
+
+
+## Configure httpd to listed on port 8008
+    - name: Configure httpd listen on port 8008 instad of 80
+      lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen 80" line="Listen 8008" state=present
+
+## Change the DocumentRoot
+    - name: Change DocumentRoot
+      lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="DocumentRoot \"/var/www/html\"" line="DocumentRoot \"/var/1786\"" state=present
+
+## Change the permissions
+    - name: Change permissions
+      lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^<Directory \"/var/www\">" line="<Directory \"/var/1786\">" state=present
+
+## Change the permissions
+    - name: Change permissions
+      lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^<Directory \"/var/www/html\">" line="<Directory \"/var/1786\">" state=present
+
+
+## Start services (httpd, vsftpd)
+    - name: Start vsfptd services
+      service:
+          name: vsftpd
+          state: started
+          enabled: yes
+
+    - name: Start httpd services
+      service:
+          name: httpd
+          state: started
+          enabled: yes
+
+    - name: Start snapd services
+      service:
+          name: snapd
+          state: started
+          enabled: yes
+
+## Install john-the ripper
+    - name: Install john-the-ripper
+      shell: snap install john-the-ripper
+
+## Create users (telescope, welcome, hackathon)
+## mkpasswd --method=sha-512
+    - name: Add welcome user
+      ansible.builtin.user:
+        name: welcome
+        password: '$6$SPTCgjNmXaTnJB6a$9xLAwocw77X5HawwffhaP9m0hyZNkUMHS.PF37PMWCb9oZANrUy.7k5qBQxHgtboTr74dsG7wBEAZk6B6CRa31'
+        createhome: yes
+
+    - name: Add telescope user
+      ansible.builtin.user:
+        name: telescope
+        password: '$6$q5.yVfQujkZil.Z.$.bQZDVWRByJwuW187J58DU35jAU9i9Wzg5VGss2E7r61ibndUb2CaKRyNs9i8q44UIxC9oar9i8/pAq/bTe001'
+        createhome: yes
+
+    - name: Add hackathon user
+      ansible.builtin.user:
+        name: hackathon
+        password: '$6$qVp3uBy1bDG1VMqa$KIZFvEax0MWpKoiEuguXCj3DtiuUIuz087tXpHDOvGg.9CVIbq7.auyvSP6x/bpP/wd5abtb1lpytur4KnMy51'
+        createhome: yes
+
+## Add files
+    - name: Copy welcome user files
+      copy:
+        src: "{{item}}"
+        dest: '/home/welcome'
+        owner: welcome
+        group: welcome
+      loop:
+        - note_to_self
+        - hint
+
+    - name: Copy hackathon user files
+      copy:
+        src: "{{item}}"
+        dest: '/home/hackathon'
+        owner: hackathon
+        group: hackathon
+      loop:
+        - next_steps
+
+    - name: Copy telescope user files
+      copy:
+        src: "{{item}}"
+        dest: '/home/telescope'
+        owner: telescope
+        group: telescope
+      loop:
+        - hint2
+        - hint3
+        - hint4
+        - .flag.zip
+        - last-hint-in-case-of-emergency
+
+    - name: Copy ftp files to /var/ftp
+      copy:
+        src: "{{item}}"
+        dest: '/var/ftp'
+        owner: root
+        group: root
+      loop:
+        - credentials
+
+    - name: Copy www files to /var/1786
+      copy:
+        src: "{{item}}"
+        dest: '/var/1786/'
+        owner: root
+        group: root
+      loop:
+        - index.html
+        - index.php
+        - decrypt.txt
+
+    - name: Allow SELinux access to new dir
+      shell: "chcon  --user system_u --type httpd_sys_content_t -Rv  /var/1786/"
+
+
+    - name: Update motd
+      copy:
+        dest: '/etc/motd'
+        content: |
+
+          ###############################################################
+          ## Welcome to the Red Hat Capture the Flag exercise!         ##
+          ##                                                           ##
+          ## Good luck and if you capture the flag, enter it at:       ##
+          ## http://telescope-hof.ddns.net                             ##
+          ##                                                           ##
+          ###############################################################
+
+
+## Change permissions
+    - name: Change flag.zip file ownership to root
+      ansible.builtin.file:
+        path: /home/telescope/.flag.zip
+        owner: root
+        group: root
+
+## Run a few tests

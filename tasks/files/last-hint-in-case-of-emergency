@@ -1,0 +1,12 @@
+john-the-ripper is a free, open-source password cracking and recovery security auditing tool
+
+First convert the zip file to a hash using:
+$ john-the-ripper.zip2john .flag.zip > flag.hash
+
+Then crack the password:
+$ john flag.hash
+
+Use the cracked password to unzip the file
+
+Then submit the decrypted flag and your name at https://telescopehof.ddns.net 
+

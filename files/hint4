@@ -1,0 +1,1 @@
+Utilize programs like john the ripper to crack password hashes, and don't forget to convert zip files to hash files before cracking. You can utilize zip2john for this type of activity. Wordlists for john can be found under /usr/share/wordlists - I recommend rockyou.txt (unzip first!)

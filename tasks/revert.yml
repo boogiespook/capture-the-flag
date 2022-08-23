@@ -1,0 +1,74 @@
+---
+- name: CTF Uninstall
+  hosts: ctf
+#  gather_facts: no
+
+# Tasks file for telescope-ctf
+  tasks:
+
+
+## Remove the file from users home directories
+    - name: Remove the various filea from home directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_itmes:
+        - /home/welcome/credentials
+        - /home/telescope/flag.hash
+        - /home/telescope/flag.txt
+        - /home/telescope/snap
+
+## Uninstall packages (httpd, ftp)
+#    - name: Uninstall packages
+#      yum:
+#        state: absent
+#        name:
+#          - httpd
+#          - vsftpd
+#          - policycoreutils-python-utils
+#          - nmap
+#          - net-tools
+#          - php
+
+## Allow port 8008 & 21
+#    - name: Remove 8008 from firewalld
+#      firewalld:
+#        port: "{{ item }}"
+#        permanent: true
+#        state: disabled
+#        immediate: true
+#      loop:
+#           - 8008/tcp
+#           - 20/tcp
+#           - 21/tcp
+
+## Restart firewalld just in case
+#    - name: Restart firewalld
+#      service:
+#          name: firewalld
+#          state: restarted
+
+## Remove ftp service from firewalld
+#    - name: Remove ftp service from firewalld
+#      shell: "firewall-cmd --permanent --zone=public --remove-service=ftp && firewall-cmd --reload"
+
+## Delete users (telescope, welcome, hackathon)
+#    - name: Remove welcome user
+#      ansible.builtin.user:
+#        name: welcome
+#        state: absent
+#        remove: yes
+#
+#    - name: Remove telescope user
+#      ansible.builtin.user:
+#        name: telescope
+#        state: absent
+#        remove: yes
+#
+#    - name: Remove hackathon user
+#      ansible.builtin.user:
+#        name: hackathon
+#        state: absent
+#        remove: yes
+
+## Run a few tests
